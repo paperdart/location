@@ -1,6 +1,6 @@
 import '/style.css';
-import LocationDetector from '/src/locationDetector.js';
-import TableRenderer from '/src/tableRenderer.js';
+import LocationDetector from './src/locationDetector.js';
+import TableRenderer from './src/tableRenderer.js';
 
 // Main application initialization
 document.addEventListener('DOMContentLoaded', async () => {
@@ -42,7 +42,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   try {
     // Load the locations data
-    const response = await fetch('/locations.json');
+    const response = await fetch('./public/locations.json');
     if (!response.ok) {
       throw new Error('Failed to load locations data');
     }
