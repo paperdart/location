@@ -1,4 +1,4 @@
-import '/style.css';
+import './style.css';
 import LocationDetector from './src/locationDetector.js';
 import TableRenderer from './src/tableRenderer.js';
 
