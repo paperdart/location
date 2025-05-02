@@ -13,7 +13,8 @@ class LocationDetector {
       cloudfrontHeaders: { status: 'pending', data: {} },
       cloudflareHeaders: { status: 'pending', data: {} },
       googleCloudHeaders: { status: 'pending', data: {} },
-      browserLanguage: { status: 'pending', data: {} }
+      browserLanguage: { status: 'pending', data: {} },
+      fastlyHeaders: { status: 'pending', data: {} }
     };
   }
 
@@ -25,10 +26,10 @@ class LocationDetector {
     await Promise.allSettled([
       this.detectTimezoneMatch(),
       this.detectCfRayMatch(),
-      this.detectCloudfrontLocation(),
-      this.detectCloudflareLocation(),
+      this.detectCloudfrontLocation(),      
       this.detectGoogleCloudLocation(),
-      this.detectBrowserLanguage()
+      this.detectBrowserLanguage(),
+      this.detectFastlyLocation()
     ]);
     
     return this.results;
@@ -119,7 +120,7 @@ class LocationDetector {
   // Method 3: CloudFlare Ray ID matching
   async detectCfRayMatch() {
     try {
-      const response = await fetch('/');
+      const response = await fetch('./');
       const cfRay = response.headers.get('cf-ray');
       
       if (!cfRay) {
@@ -162,7 +163,7 @@ class LocationDetector {
   // Method 4: CloudFront Location Headers
   async detectCloudfrontLocation() {
     try {
-      const response = await fetch('/');
+      const response = await fetch('./');
       const countryHeader = response.headers.get('cloudfront-viewer-country');
       const countryNameHeader = response.headers.get('cloudfront-viewer-country-name');
       const regionHeader = response.headers.get('cloudfront-viewer-region');
@@ -193,7 +194,7 @@ class LocationDetector {
   // Method 5: Cloudflare Location Headers
   async detectCloudflareLocation() {
     try {
-      const response = await fetch('/');
+      const response = await fetch('./');
       const country = response.headers.get('cf-ipcountry');
       const region = response.headers.get('cf-region');
       const city = response.headers.get('cf-city');
@@ -295,6 +296,50 @@ class LocationDetector {
       };
     }
   }
+
+  // Method 8: Fastly X-Server-By
+  async detectFastlyLocation() {
+    try {
+      const response = await fetch('./');
+      const xServerBy = response.headers.get('x-served-by');
+      
+      if (!xServerBy) {
+        this.results.fastlyHeaders.status = 'fail';
+        this.results.fastlyHeaders.message = 'X-Served-By header not found';
+        return;
+      }
+      
+      // Extract last 3 characters which might correspond to an IATA code
+      const iataCode = xServerBy.slice(-3).toUpperCase();
+      
+      // Find a location matching the IATA code
+      const location = this.locationsData.find(location => location.iata === iataCode);
+      
+      if (!location) {
+        this.results.fastlyHeaders.status = 'fail';
+        this.results.fastlyHeaders.message = `No location matching IATA code ${iataCode}`;
+        return;
+      }
+      
+      this.results.fastlyHeaders = {
+        status: 'success',
+        data: {
+          iataCode,
+          country: location.country,
+          state: location.state,
+          city: location.city,
+          latitude: location.latitude,
+          longitude: location.longitude
+        }
+      };
+    } catch (error) {
+      this.results.fastlyHeaders = {
+        status: 'fail',
+        message: error.message
+      };
+    }
+  }
+  
 
   // Helper function to find the closest location to coordinates
   findClosestLocation(latitude, longitude) {
