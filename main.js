@@ -1,6 +1,6 @@
 import './style.css';
-import LocationDetector from './src/js/locationDetector.js';
-import TableRenderer from './src/js/tableRenderer.js';
+import LocationDetector from '/src/locationDetector.js';
+import TableRenderer from '/src/tableRenderer.js';
 
 // Main application initialization
 document.addEventListener('DOMContentLoaded', async () => {
